@@ -1,0 +1,125 @@
+dim Net_Name as str;
+dim Node_Name as str;
+
+Sub init()
+	dim FileName as str;
+	
+	FileName="Protoc\\SNMPDEV.dat";
+	File_GetTimestamp(FileName,"SNMPDEV_timestamp%");
+	FileName="Protoc\\BACDEV.dat";
+	File_GetTimestamp(FileName,"BACDEV_timestamp%");
+	FileName="Protoc\\LNSNODE.dat";
+	File_GetTimestamp(FileName,"LNSNODE_timestamp%");
+End Sub
+
+Sub All_File()
+	BACnet_File();
+	SNMP_File();
+	LonWorks_file();
+End Sub
+
+
+
+Sub BACnet_File()
+	File_Create("BACDEV",2,3);
+End Sub
+
+Sub SNMP_File()
+	File_Create("SNMPDEV",2,3);
+End Sub
+
+Sub LonWorks_File()
+	File_Create("LNSNODE",3,2);
+End Sub
+
+Sub File_GetTimestamp(FileName,Varname)
+	dim bufh as long; 'buffer handle
+	bufh=ALLOC_BUFFER(22);
+	If(FSTAT(FileName,bufh)==1) Then
+   		?VarName=CGET_BUFFER (bufh,4,18);
+ 	else
+ 		?VarName="??/??/??";
+ 	End if
+ 	free_buffer(bufh);
+ End Sub
+
+
+Sub File_Create(Node_Type,DATA1_Index,DATA2_Index)
+	dim Varexp_IsOpen as integer;
+	dim Varexp_File as str;
+	dim Node_File as str;
+	dim Data_Type as str;
+	dim Data_line as str;
+	dim TreeView_File as str;
+	dim TreeView_Root as str;
+
+
+
+	Varexp_File=addstring(getprojectdir(),"\\C\\varexp.dat",);
+	fclose(Varexp_File);
+	Varexp_IsOpen=fopen(Varexp_File,"r");
+	if(Varexp_IsOpen==1) then
+		Node_File=addstring("Protoc\\",Node_Type,".dat");
+		TreeView_File=addstring("Protoc\\",Node_Type,"_TreeView.dat");
+		Unlink(Node_File);
+		Unlink(TreeView_File);
+		File_Write(TreeView_File,addstring("ASCII32,",datetimestring(datetimevalue(),"#D,#M,###Y,#h:#m,#s"),CHR(10),"FONTS,BEGIN",CHR(10),"FONTS,END",chr(10),"COLORS,BEGIN",CHR(10),"COLORS,END"));	
+		Data_line=FGETS(Varexp_File,1000);
+		
+		While (FEOF(Varexp_File)==0 && cmpstring(Data_TYPE,"BRANCH")!=0)
+			Data_Type=Str_Extract_Data(Data_line,1);
+			if(cmpstring(Data_Type,Node_Type)==0) then
+				Node_Name=Str_Extract_Data(Data_line,DATA2_Index);
+				Net_Name=Str_Extract_Data(Data_line,DATA1_Index);
+				if(cmpstring(Node_Name,"")!=0 && cmpstring(Net_Name,"")!=0) then
+					File_Write(Node_File,addstring(Net_Name,";",Node_Name));
+					if(cmpstring(TreeView_Root,"")==0) then
+						File_Write(TreeView_File,addstring("CI,BEGIN,0,\"\",\"",Net_Name,"\",\"\",0"));
+					else
+						if(cmpstring(TreeView_Root,Net_Name)!=0)then
+							File_Write(TreeView_File,addstring("CI,END",chr(10),"CI,BEGIN,0,\"\",\"",Net_Name,"\",\"\",0"));
+						end if
+					end if
+					TreeView_Root=Net_Name;
+					File_Write(TreeView_File,addstring(chr(09),"CI,BEGIN,0,\"\",\"",Node_Name,"\",\"\",0",chr(10),chr(09),"CI,END"));
+					
+				end if
+				
+			end if
+			Data_line=FGETS(Varexp_File,1000);
+			
+		Wend
+		if(cmpstring(Net_Name,"")!=0) then
+			File_Write(TreeView_File,"CI,END");
+		end if
+	end if
+	fclose(Varexp_File);
+	fclose(TreeView_File);
+	File_GetTimestamp(Node_File,addstring(Node_Type,"_timestamp%"));
+End Sub
+
+SUB Str_Extract_Data(Line,Index)
+  DIM hdl as long;
+  DIM ch as str;
+  DIM length as integer;
+  hdl = ALLOC_BUFFER(1000);
+  PUT_BUFFER(hdl, 0,Line);
+  length = ASCIIFIELD("LEN",hdl);
+  if(length>0 && ASCIIFIELD("COUNT",hdl,";")>1) then
+  	ch = ASCIIFIELD("STR",hdl,Index,";");
+  else
+  	ch = ASCIIFIELD("STR",hdl,Index,",");
+  end if
+  free_buffer(hdl);
+  return(ch);
+END SUB
+
+Sub File_Write(File_Name,Data)
+	dim File_IsOpen as integer;
+	File_IsOpen=Fopen(File_Name, "a+");
+	if(File_IsOpen==1) then
+		FPUTS(File_Name,Data);
+		FPUTS(File_Name,CHR(10));
+		Fclose(File_Name);
+	end if		
+End Sub

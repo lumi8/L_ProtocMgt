@@ -1,0 +1,315 @@
+dim Window_Name as str;
+dim Window_Branch as str;
+
+dim ComboBox_Id as str;
+dim Combobx_SelId as long;
+dim Combobox_UserData as str;
+
+dim TreeView_Id as str;
+dim TreeView_SelNet as str;
+dim TreeView_SelNode as str;
+
+
+dim Net_Name as str;
+dim Node_Name as str;
+
+
+Sub Init()
+	dim bufh as long; 'buffer handle
+	dim FileName as str;
+	dim var as str;
+	
+	var="net_name%";
+	?var="";
+	var="Node_name%";
+	?var="";
+	
+
+	Window_Name=getarg("WINDOW");
+	Window_Branch=getarg("WBRANCH");
+	ComboBox_Id="Protoc_List";
+	TreeView_Id="Protoc_Tree";
+	
+	combobox("CLEAR", Window_Name, Window_Branch, ComboBox_Id);
+	Filename=addstring(getprojectdir(),"\\LIB\\L_ProtocMgt\\TP\\_treeview.dat");
+	fcopy(Filename, addstring(getprojectdir(),"\\TP\\protoc\\_treeview.dat"), 1);
+	Treeview("LOAD", Window_Name, Window_Branch, TreeView_Id,"treeview.dat");
+		
+	Combobox("INSERT", Window_Name, Window_Branch, ComboBox_Id, "None","");
+	
+	bufh=ALLOC_BUFFER(22);
+	
+	FileName="Protoc\\BACDEV_treeview.dat";
+	IF(FSTAT(FileName,bufh)==1) THEN
+		Combobox("INSERT", Window_Name, Window_Branch, ComboBox_Id, "BACnet","BACDEV");
+	end if
+	Filename="Protoc\\LNSNODE_treeview.dat";
+	IF(FSTAT(FileName,bufh)==1) THEN
+		Combobox("INSERT", Window_Name, Window_Branch, ComboBox_Id, "LonWorks","LNSNODE");
+	end if
+	Filename="Protoc\\SNMPDEV_treeview.dat";
+	IF(FSTAT(FileName,bufh)==1) THEN
+		Combobox("INSERT", Window_Name, Window_Branch, ComboBox_Id, "SNMP","SNMPDEV");
+	end if
+	free_buffer(bufh);
+	combobox("SETSELECTEDINDEX", Window_Name, Window_Branch, ComboBox_Id, 0,1);
+	
+End Sub
+
+
+
+Sub ProtocChoice()
+	Dim FileName as str;
+	dim TmpVar_NodeFile_timestamp as str;
+	dim bufh as long;
+	dim var as str;
+	
+	var="net_name%";
+	?var="";
+	var="Node_name%";
+	?var="";
+	
+	Combobx_SelId= COMBOBOX("GETSELECTEDINDEX", Window_Name, Window_Branch, ComboBox_Id);
+	Combobox_UserData= combobox("GETUSERDATA", Window_Name, Window_Branch, ComboBox_Id, Combobx_SelId);
+	
+	FileName= addstring("Protoc\\",Combobox_UserData,"_TreeView.dat");
+	if(fopen(FileName,"r")) then
+		fclose(FileName);
+		treeview("LOAD", Window_Name, Window_Branch, TreeView_Id, FileName);
+		TmpVar_NodeFile_timestamp="NodeFile_timestamp%";
+	else
+		print("echec");
+	end if
+End Sub
+
+Sub Update()
+	dim TmpVar_Protoc_Node as str;
+	dim TmpVar_NodeFile_timestamp as str;
+	Dim FileName as str;
+	dim NodeType as str;
+
+	TmpVar_NodeFile_timestamp="NodeFile_timestamp%";
+	TmpVar_Protoc_Node="Protoc_Node%";
+	NodeType=?TmpVar_Protoc_Node;
+	FileName= addstring("Protoc\\",NodeType,"_TreeView.dat");
+	if(cmpstring("LNSNODE",ucase(NodeType))==0) then
+		File_Create(NodeType,2,3); 
+	else
+				File_Create(NodeType,3,2);
+	end if
+	treeview("LOAD", Window_Name, Window_Branch, TreeView_Id, FileName);
+
+	
+End Sub
+
+Sub GetNodeStatus() 
+	dim AnimVar as str;
+	dim SysVar as str;
+	dim SelectedIndex as long;
+	dim filter as str;
+	dim SysVarType as str;
+
+	 
+	SelectedIndex=treeview("GETSELECTEDINDEX", Window_Name, Window_Branch, TreeView_Id);
+	TreeView_SelNode=treeview("GETTEXT", Window_Name, Window_Branch, TreeView_Id,SelectedIndex);
+	SelectedIndex=treeview("GETPARENTNODE",Window_Name, Window_Branch, TreeView_Id,SelectedIndex);
+	TreeView_SelNet=treeview("GETTEXT", Window_Name, Window_Branch, TreeView_Id,SelectedIndex);
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		SysVarType="LNS";
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		SysVarType="BACNET";
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SysVarType="SNMP";
+	end if
+	if(cmpstring(TreeView_SelNet,"")==0) then
+		TreeView_SelNet=TreeView_SelNode;
+		TreeView_SelNode="";
+		SysVar=addstring("System.",SysVarType,".",TreeView_SelNet,".On");
+		AnimVar="Net_Started%";
+		?AnimVar=?SysVar;
+		SysVar=addstring("System.",SysVarType,".",TreeView_SelNet,".Status");
+		AnimVar="Net_Status%";
+		?AnimVar=?SysVar;
+	else
+		SysVar=addstring("System.",SysVarType,".",TreeView_SelNet,".On");
+		AnimVar="Net_Started%";
+		?AnimVar=?SysVar;
+		SysVar=addstring("System.",SysVarType,".",TreeView_SelNet,".Status");
+		AnimVar="Net_Status%";
+		?AnimVar=?SysVar;
+		SysVar=addstring("System.",SysVarType,".",TreeView_SelNet,".",TreeView_SelNode,".On");
+		AnimVar="Node_Started%";
+		?AnimVar=?SysVar;
+		SysVar=addstring("System.",SysVarType,".",TreeView_SelNet,".",TreeView_SelNode,".Status");
+		AnimVar="Node_Status%";
+		?AnimVar=?SysVar;
+	end if
+	AnimVar="Net_Name%";
+	?AnimVar=TreeView_SelNet;
+	AnimVar="Node_Name%";
+	?AnimVar=TreeView_SelNode;
+End Sub
+
+
+Sub Start_End()
+	print(getarg("VARNAME"));
+	print(event("DEL", getarg("VARNAME"),"All>S","L_ProtocMgt/Mimic.scb", "", "Start_End"));
+	@System.Protoc.Start=0;
+	GetNodeStatus();
+	@System.Protoc.Network="";
+	@System.Protoc.Node="";
+
+End Sub
+
+Sub Stop_End()
+	print(getarg("VARNAME"));
+	print(event("DEL", getarg("VARNAME"),"All>S","L_ProtocMgt/Mimic.scb", "", "Stop_End"));
+	@System.Protoc.Stop=0;
+	@System.Protoc.Network="";
+	@System.Protoc.Node="";
+	GetNodeStatus();
+End Sub
+
+
+Sub Start_Network()
+	dim SysVar as str;
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		SysVar=addstring("System.LNS.",TreeView_SelNet,".On");
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		SysVar=addstring("System.BACNET.",TreeView_SelNet,".On");
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SysVar=addstring("System.SNMP.",TreeView_SelNet,".On");
+	end if
+	event("ADD", SysVar,"ALL>S", "L_ProtocMgt/Mimic.scb", "", "Start_End");
+	@System.Protoc.Start=1;
+	@System.Protoc.Network=TreeView_SelNet;
+	@System.Protoc.Node="";
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		lonworks("STARTNETWORK", TreeView_SelNet);
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		Bacnet("START_NETWORK", TreeView_SelNet);
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SNMP("START", TreeView_SelNet);
+	end if
+End Sub
+
+Sub Stop_Network()
+	dim SysVar as str;
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		SysVar=addstring("System.LNS.",TreeView_SelNet,".On");
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		SysVar=addstring("System.BACNET.",TreeView_SelNet,".On");
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SysVar=addstring("System.SNMP.",TreeView_SelNet,".On");
+	end if
+	event("ADD", SysVar,"ALL>S", "L_ProtocMgt/Mimic.scb", "", "Stop_End");
+	@System.Protoc.Stop=1;
+	@System.Protoc.Network=TreeView_SelNet;
+	@System.Protoc.Node="";
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		lonworks("STOPNETWORK", TreeView_SelNet);
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		Bacnet("STOP_NETWORK", TreeView_SelNet);
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SNMP("STOP", TreeView_SelNet);
+	end if
+End Sub
+
+Sub Start_Node()
+	dim SysVar as str;
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		SysVar=addstring("System.LNS.",TreeView_SelNet,".",TreeView_SelNode,".On");
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		SysVar=addstring("System.BACNET.",TreeView_SelNet,".",TreeView_SelNode,".On");
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SysVar=addstring("System.SNMP.",TreeView_SelNet,".",TreeView_SelNode,".On");
+	end if
+	event("ADD", SysVar,"ALL>S", "L_ProtocMgt/Mimic.scb", "", "Start_End");
+	@System.Protoc.Start=1;
+	@System.Protoc.Network=TreeView_SelNet;
+	@System.Protoc.Node=TreeView_SelNode;
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		lonworks("STARTNODE", addstring(TreeView_SelNet,"/",TreeView_SelNode));
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		Bacnet("START_DEVICE", TreeView_SelNet,TreeView_SelNode);
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SNMP("START", addstring(TreeView_SelNet,".",TreeView_SelNode));
+	end if
+End Sub
+
+Sub Stop_Node()
+	dim SysVar as str;
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		SysVar=addstring("System.LNS.",TreeView_SelNet,".",TreeView_SelNode,".On");
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		SysVar=addstring("System.BACNET.",TreeView_SelNet,".",TreeView_SelNode,".On");
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SysVar=addstring("System.SNMP.",TreeView_SelNet,".",TreeView_SelNode,".On");
+	end if
+	event("ADD", SysVar,"ALL>S", "L_ProtocMgt/Mimic.scb", "", "Stop_End");
+	@System.Protoc.Stop=1;
+	@System.Protoc.Network=TreeView_SelNet;
+	@System.Protoc.Node=TreeView_SelNode;
+	if(cmpstring(Combobox_UserData,"LNSNODE")==0) then
+		lonworks("STOPNODE", addstring(TreeView_SelNet,"/",TreeView_SelNode));
+	end if
+	if(cmpstring(Combobox_UserData,"BACDEV")==0) then
+		Bacnet("STOP_DEVICE", TreeView_SelNet,TreeView_SelNode);
+	end if
+	if(cmpstring(Combobox_UserData,"SNMPDEV")==0) then
+		SNMP("STOP", addstring(TreeView_SelNet,".",TreeView_SelNode));
+	end if
+End Sub
+
+sub Start_All_Nodes()
+	program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode",addstring(Combobox_UserData,",",TreeView_SelNet));
+end sub
+
+Sub File_GetTimestamp(FileName,Varname)
+	dim bufh as long; 'buffer handle
+
+	bufh=ALLOC_BUFFER(22);
+	IF(FSTAT(FileName,bufh)==1) THEN
+		print(varname);
+   		?VarName=CGET_BUFFER (bufh,4,18);
+ 	END IF
+ 	free_buffer(bufh);
+ 
+
+ End Sub
+
+
+
+
+
+SUB Str_Extract_Data(Line,Index)
+  DIM hdl as long;
+  DIM ch as str;
+  DIM length as integer;
+  hdl = ALLOC_BUFFER(1000);
+  PUT_BUFFER(hdl, 0,Line);
+  length = ASCIIFIELD("LEN",hdl);
+  if(length>0 && ASCIIFIELD("COUNT",hdl,";")>1) then
+  	ch = ASCIIFIELD("STR",hdl,toi(Index),";");
+  else
+  	ch = ASCIIFIELD("STR",hdl,toi(Index),",");
+  end if
+  free_buffer(hdl);
+  return(ch);
+END SUB

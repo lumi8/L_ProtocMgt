@@ -1,0 +1,12 @@
+Sub Main()
+	dim FileName as str;
+
+	Filename=addstring(getprojectdir(),"\\LIB\\L_ProtocMgt\\TP\\import.dat");
+	if(fcopy(Filename, addstring(getprojectdir(),"\\TP\\protoc\\import.dat"), 1)) then
+		variable("importfile",addstring(getprojectdir(),"\\TP\\protoc\\import.dat"));
+	program("PRELOAD", "L_ProtocMgt/Mimic.scb", "");
+	program("PRELOAD", "L_ProtocMgt/FileCreate.scb", "");
+	program("PRELOAD", "L_ProtocMgt/AutoStart.scb", "");
+	end if
+
+End Sub
