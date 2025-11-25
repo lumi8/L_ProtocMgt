@@ -55,7 +55,7 @@ Sub File_Create(Node_Type,DATA1_Index,DATA2_Index)
 
 
 
-	Varexp_File=addstring(getprojectdir(),"\\C\\varexp.dat",);
+	Varexp_File=addstring(getprojectdir(),"\\CTEMP\\varexp.dat",);
 	fclose(Varexp_File);
 	Varexp_IsOpen=fopen(Varexp_File,"r");
 	if(Varexp_IsOpen==1) then
