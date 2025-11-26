@@ -1,0 +1,5 @@
+Sub Main()
+	program("PRELOAD", "L_ProtocMgt/Mimic.scb", "");
+	program("PRELOAD", "L_ProtocMgt/FileCreate.scb", "");
+	program("START", "L_ProtocMgt/AutoStart.scb", "");
+End Sub

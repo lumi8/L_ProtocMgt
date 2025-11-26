@@ -1,0 +1,166 @@
+Sub Main()
+	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","snmpdev");
+	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","bacdev");
+	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","lnsnode");
+	 
+End Sub
+
+
+Sub StartNode()
+	dim FileName as str;
+	dim Node_Type as str;
+	dim Node_Name as str;
+	dim Net_Name as str;
+	dim Data_line as str;
+	DIM FileIsOpen as integer;
+	dim Node_SysVar as str;
+	dim Network_SysVar as str;
+	dim NetworkToStart as str;
+	dim NodeToStart as integer;
+	dim NetToStart as integer;
+	dim i as integer;
+
+	Node_Type=Ucase(getarg("ARG1"));	'lnsnode, bacdev, snmpdev
+	NetworkToStart=Ucase(getarg("ARG2"));	'0 or 1
+	
+	@LIB.L_ProtocMgt.Start=1;	
+	FileName=addstring(getprojectdir(),"\\TP\\Protoc\\",Node_Type,".dat");
+	Print("FileName : ", FileName);
+	if(cmpstring(getarg("SOURCE"),"EVENT")==0) then
+		print("event");
+		FileIsOpen=1;
+		EVENT("DEL", getarg("VARNAME"),"All>S","L_ProtocMgt/AutoStart.scb","","StartNode");
+		if(cmpstring(getarg("ARG3"),"")!=0 && cmpstring(getarg("ARG4"),"")!=0) then
+			data_line=addstring(getarg("ARG3"),";", getarg("ARG4"));
+		else
+			Data_line=fgets(FileName, 255);
+		end if		
+	else
+		Data_line=fgets(FileName,255);
+		if(cmpstring(Data_line,"")==0) then
+			FileIsOpen=fopen(FileName, "r");
+			'print(FileIsOpen);
+			if(FileIsOpen==1) then
+				Data_line=fgets(FileName,255);
+				
+			end if
+		end if
+	end if
+	While(FEOF(FileName)==0 && FileIsOpen==1 && NetToStart==0 && NodeToStart==0)
+		print("Data_line : ", Data_line);
+		Net_Name=Str_Extract_Data(Data_line,1);
+		print("Net_Name : ",Net_Name);
+		print("Node_Type : ",Node_Type);
+		print("NetworkToStart : ",NetworkToStart);
+
+		
+		Node_Name=Str_Extract_Data(Data_line,2);
+		print("Node_Name : ",Node_Name);
+		if(cmpstring(NetworkToStart,"")==0 || cmpstring(NetworkToStart,Ucase(Net_Name))==0) then	
+			if(cmpstring(Net_Name,"")!=0 && cmpstring(Node_Name,"")!=0 ) then
+			    If (CmpString(Node_Type, "LNSNODE")==0) Then
+					Network_SysVar=addstring("System.LNS.",Net_Name,".On");		    	
+			    End If
+			    If (CmpString(Node_Type, "BACDEV")==0) Then
+					Network_SysVar=addstring("System.BACNET.",Net_Name,".On");		    	
+			    End If
+			    If (CmpString(Node_Type, "SNMPDEV")==0) Then
+					Network_SysVar=addstring("System.SNMP.",Net_Name,".On");		    	
+			    End If
+			    print("Network_SysVar : ", Network_SysVar);
+			    print("NetworkToStart : ", NetworkToStart);
+				if(variable("STATUS", Network_SysVar,"Exist")) then
+					if(?Network_SysVar ==1 && variable("STATUS", Network_SysVar,"Valid")) then
+					    If (CmpString(Node_Type, "LNSNODE")==0) Then
+							Node_SysVar=addstring("System.LNS.",Net_Name,".",Node_Name,".On");				    	
+					    End If
+					    If (CmpString(Node_Type, "BACDEV")==0) Then
+							Node_SysVar=addstring("System.BACNET.",Net_Name,".",Node_Name,".On");				    	
+					    End If
+					    If (CmpString(Node_Type, "SNMPDEV")==0) Then
+							Node_SysVar=addstring("System.SNMP.",Net_Name,".",Node_Name,".On");				    	
+					    End If
+						if(variable("STATUS", Node_SysVar,"Exist")) then
+							if(variable("STATUS", Node_SysVar,"Valid")) then
+								if(?Node_SysVar==0) then 
+									NodeToStart=1;
+								else
+									print(addstring(Node_Name, "alredy started"));
+									Data_line=fgets(FileName, 255);
+								end if
+							ELSE
+								print(addstring(Node_Name, "does'nt exist"));
+								Data_line=fgets(FileName, 255);
+							end if
+						else
+							print(addstring(Node_Name, "does'nt exist"));
+							Data_line=fgets(FileName, 255);
+						end if
+					else
+						NetToStart=1;
+						print(addstring(Net_Name, " is not started"));
+					end if
+				else
+					print(addstring(Net_Name, " does'nt exist"));
+					Data_line=fgets(FileName, 255);
+				end if
+			else
+				print("Net_Name or Node Name empty");
+				Data_line=fgets(FileName, 255); 
+			end if
+		else
+			print(addstring(Net_Name, " hes not to be started"));
+			Data_line=fgets(FileName, 255);		
+		end if
+	Wend
+	if(NetToStart==1) then
+		if(cmpstring(Node_Type,"LNSNODE")==0) then
+			lonworks("STARTNETWORK",Net_Name);
+		end if
+		if(cmpstring(Node_Type,"BACDEV")==0) then
+			bacnet("START_NETWORK",Net_Name);
+		end if
+		if(cmpstring(Node_Type,"SNMPDEV")==0) then
+			SNMP("START", Net_Name);
+		end if
+		@LIB.L_ProtocMgt.Network=Net_Name;
+		@LIB.L_ProtocMgt.Node="";
+		EVENT("ADD", Network_SysVar, "All>S","L_ProtocMgt/AutoStart.scb","","StartNode",addstring(Node_Type,",",NetworkToStart,",",Net_Name,",",Node_Name));
+	
+	else if(NodeToStart==1) then
+	    Print("NodeToStart : ", NodeToStart);
+		if(cmpstring(Node_Type,"LNSNODE")==0) then
+			lonworks("STARTNODE", addstring(Net_Name, "/",Node_Name));
+		end if
+		if(cmpstring(Node_Type,"BACDEV")==0) then
+			BACnet("START_DEVICE", Net_Name, Node_Name);
+		end if
+		if(cmpstring(Node_Type,"SNMPDEV")==0) then
+			SNMP("START", addstring(Net_Name,".",Node_Name));
+		end if
+		EVENT("ADD", Node_SysVar, "All>S","L_ProtocMgt/AutoStart.scb","","StartNode",addstring(Node_Type,",",NetworkToStart,",,"));
+		@LIB.L_ProtocMgt.Network=Net_Name;
+		@LIB.L_ProtocMgt.Node=Node_Name;
+		else
+			@LIB.L_ProtocMgt.Start=0;
+			fclose(FileName);
+		end if
+	end if	
+End Sub
+
+
+SUB Str_Extract_Data(Line,Index)
+  DIM hdl as long;
+  DIM ch as str;
+  DIM length as integer;
+  hdl = ALLOC_BUFFER(1000);
+  PUT_BUFFER(hdl, 0,Line);
+  length = ASCIIFIELD("LEN",hdl);
+  if(length>0 && ASCIIFIELD("COUNT",hdl,";")>1) then
+  	ch = ASCIIFIELD("STR",hdl,toi(Index),";");
+  else
+  	ch = ASCIIFIELD("STR",hdl,toi(Index),",");
+  end if
+  free_buffer(hdl);
+  return(ch);
+END SUB

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<TemplatesRoot Name="" SchemaVersion="16.0.0">
+<Library Name="L_ProtocMgt">
+<CategoriesList/>
+<TemplatesList>
+<Template Name="L_ProtocMgt">
+<AutoNaming_Prefix/>
+<AutoNaming_StartValue>1</AutoNaming_StartValue>
+<AutoNaming_FixedDigits>2</AutoNaming_FixedDigits>
+<AutoNaming_Step>1</AutoNaming_Step>
+<Enable_Instance>true</Enable_Instance>
+<ParametersList/>
+<TemplatesList/>
+<ObjectsList>
+<Object Name="Network">
+<InternalType>2</InternalType>
+<SvType>3</SvType>
+<ObjectItem SubType="">
+<Properties>
+<Property id="Command" Reset="false" Substitute="false">-1</Property>
+<Property id="Type" Reset="false" Substitute="false">3</Property>
+</Properties>
+</ObjectItem>
+<ObjectsList/>
+</Object>
+<Object Name="Node">
+<InternalType>2</InternalType>
+<SvType>3</SvType>
+<ObjectItem SubType="">
+<Properties>
+<Property id="Command" Reset="false" Substitute="false">-1</Property>
+<Property id="Type" Reset="false" Substitute="false">3</Property>
+</Properties>
+</ObjectItem>
+<ObjectsList/>
+</Object>
+<Object Name="Start">
+<InternalType>2</InternalType>
+<SvType>1</SvType>
+<ObjectItem SubType="">
+<Properties>
+<Property id="Command" Reset="false" Substitute="false">-1</Property>
+<Property id="InitialValue" Reset="false" Substitute="false">0</Property>
+<Property id="UseExtendedAttributes" Reset="false" Substitute="false">-1</Property>
+<Property id="WithInitialValue" Reset="false" Substitute="false">-1</Property>
+</Properties>
+</ObjectItem>
+<ObjectsList/>
+</Object>
+<Object Name="Stop">
+<InternalType>2</InternalType>
+<SvType>1</SvType>
+<ObjectItem SubType="">
+<Properties>
+<Property id="Command" Reset="false" Substitute="false">-1</Property>
+<Property id="InitialValue" Reset="false" Substitute="false">0</Property>
+<Property id="UseExtendedAttributes" Reset="false" Substitute="false">-1</Property>
+<Property id="WithInitialValue" Reset="false" Substitute="false">-1</Property>
+</Properties>
+</ObjectItem>
+<ObjectsList/>
+</Object>
+</ObjectsList>
+<InheritedTemplatesList/>
+</Template>
+</TemplatesList>
+</Library>
+</TemplatesRoot>
+</root>
