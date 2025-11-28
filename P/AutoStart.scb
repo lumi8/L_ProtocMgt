@@ -1,8 +1,12 @@
 Sub Main()
+' Comment the lines you don't want to use
+	Window("OPEN", "L_ProtocMgt/ProtocMgt", "");
+	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","mdnp3dev");
 	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","snmpdev");
-	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","bacdev");
-	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","lnsnode");
-	 
+'	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","bacdev");
+'	 program("FUNCTION", "L_ProtocMgt/AutoStart.scb", "", "StartNode","lnsnode");
+
+	
 End Sub
 
 
@@ -67,6 +71,9 @@ Sub StartNode()
 			    If (CmpString(Node_Type, "SNMPDEV")==0) Then
 					Network_SysVar=addstring("System.SNMP.",Net_Name,".On");		    	
 			    End If
+			    If (CmpString(Node_Type, "MDNP3DEV")==0) Then
+					Network_SysVar=addstring("System.DNP3.",Net_Name,".On");		    	
+			    End If
 			    print("Network_SysVar : ", Network_SysVar);
 			    print("NetworkToStart : ", NetworkToStart);
 				if(variable("STATUS", Network_SysVar,"Exist")) then
@@ -79,6 +86,9 @@ Sub StartNode()
 					    End If
 					    If (CmpString(Node_Type, "SNMPDEV")==0) Then
 							Node_SysVar=addstring("System.SNMP.",Net_Name,".",Node_Name,".On");				    	
+					    End If
+					    If (CmpString(Node_Type, "MDNP3DEV")==0) Then
+							Node_SysVar=addstring("System.DNP3.",Net_Name,".",Node_Name,".On");				    	
 					    End If
 						if(variable("STATUS", Node_SysVar,"Exist")) then
 							if(variable("STATUS", Node_SysVar,"Valid")) then
@@ -123,6 +133,9 @@ Sub StartNode()
 		if(cmpstring(Node_Type,"SNMPDEV")==0) then
 			SNMP("START", Net_Name);
 		end if
+		if(cmpstring(Node_Type,"MDNP3DEV")==0) then
+			MDNP3("NETWORK_START", Net_Name);
+		end if
 		@LIB.L_ProtocMgt.Network=Net_Name;
 		@LIB.L_ProtocMgt.Node="";
 		EVENT("ADD", Network_SysVar, "All>S","L_ProtocMgt/AutoStart.scb","","StartNode",addstring(Node_Type,",",NetworkToStart,",",Net_Name,",",Node_Name));
@@ -137,6 +150,9 @@ Sub StartNode()
 		end if
 		if(cmpstring(Node_Type,"SNMPDEV")==0) then
 			SNMP("START", addstring(Net_Name,".",Node_Name));
+		end if
+		if(cmpstring(Node_Type,"MDNP3DEV")==0) then
+			MDNP3("DEVICE_START", addstring(Net_Name,".",Node_Name));
 		end if
 		EVENT("ADD", Node_SysVar, "All>S","L_ProtocMgt/AutoStart.scb","","StartNode",addstring(Node_Type,",",NetworkToStart,",,"));
 		@LIB.L_ProtocMgt.Network=Net_Name;

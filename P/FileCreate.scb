@@ -10,12 +10,15 @@ Sub init()
 	File_GetTimestamp(FileName,"BACDEV_timestamp%");
 	FileName="Protoc\\LNSNODE.dat";
 	File_GetTimestamp(FileName,"LNSNODE_timestamp%");
+	FileName="Protoc\\MDNP3DEV.dat";
+	File_GetTimestamp(FileName,"MDNP3DEV_timestamp%");
 End Sub
 
 Sub All_File()
 	BACnet_File();
 	SNMP_File();
 	LonWorks_file();
+	DNP3_File();
 End Sub
 
 
@@ -30,6 +33,10 @@ End Sub
 
 Sub LonWorks_File()
 	File_Create("LNSNODE",3,2);
+End Sub
+
+Sub DNP3_File()
+	File_Create("MDNP3DEV",2,3);
 End Sub
 
 Sub File_GetTimestamp(FileName,Varname)
@@ -65,12 +72,15 @@ Sub File_Create(Node_Type,DATA1_Index,DATA2_Index)
 		Unlink(TreeView_File);
 		File_Write(TreeView_File,addstring("ASCII32,",datetimestring(datetimevalue(),"#D,#M,###Y,#h:#m,#s"),CHR(10),"FONTS,BEGIN",CHR(10),"FONTS,END",chr(10),"COLORS,BEGIN",CHR(10),"COLORS,END"));	
 		Data_line=FGETS(Varexp_File,1000);
+		Print(Data_line);
 		
 		While (FEOF(Varexp_File)==0 && cmpstring(Data_TYPE,"BRANCH")!=0)
 			Data_Type=Str_Extract_Data(Data_line,1);
 			if(cmpstring(Data_Type,Node_Type)==0) then
 				Node_Name=Str_Extract_Data(Data_line,DATA2_Index);
 				Net_Name=Str_Extract_Data(Data_line,DATA1_Index);
+				Print("Node_Name : ",Node_Name);
+				Print("Net_Name : ",Net_Name);				
 				if(cmpstring(Node_Name,"")!=0 && cmpstring(Net_Name,"")!=0) then
 					File_Write(Node_File,addstring(Net_Name,";",Node_Name));
 					if(cmpstring(TreeView_Root,"")==0) then
